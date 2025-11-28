@@ -18,10 +18,10 @@ export class IdempotencyRecord {
   @Column('bigint')
   logicalTimestamp: number;
 
-  @Column('jsonb')
+  @Column('simple-json')
   requestData: any;
 
-  @Column('jsonb')
+  @Column('simple-json')
   responseData: any;
 
   @Column('varchar', { length: 100 })

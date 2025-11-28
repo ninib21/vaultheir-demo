@@ -1,7 +1,6 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MongooseModule } from '@nestjs/mongoose';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { HttpModule } from '@nestjs/axios';
@@ -11,18 +10,17 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HederaModule } from './hedera/hedera.module';
 import { PricingModule } from './pricing/pricing.module';
-import { IPAssetsModule } from './ip-assets/ip-assets.module';
 import { AdaptiveModule } from './adaptive/adaptive.module';
 import { AdaptiveMiddleware } from './adaptive/middleware/adaptive.middleware';
 import { PerformanceInterceptor } from './common/performance.interceptor';
 import { BenchmarkModule } from './benchmark/benchmark.module';
 
 /**
- * VaultHeir Application Module - Production Configuration
+ * VaultHeir Application Module - Demo Configuration
  *
  * Features:
- * - Multi-database support (PostgreSQL + MongoDB)
- * - Redis caching with intelligent TTL
+ * - SQLite database for demo (no external DB required)
+ * - In-memory caching
  * - Rate limiting with tiered access
  * - Scheduled tasks and background jobs
  * - HTTP client for external integrations
@@ -70,51 +68,39 @@ import { BenchmarkModule } from './benchmark/benchmark.module';
     }),
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // DATABASE - PostgreSQL (Primary relational data)
+    // DATABASE - SQLite for Demo (No external DB required)
     // ═══════════════════════════════════════════════════════════════════════════
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('DATABASE_HOST', 'localhost'),
-        port: config.get('DATABASE_PORT', 5432),
-        username: config.get('DATABASE_USER', 'vaultheir'),
-        password: config.get('DATABASE_PASSWORD', 'password'),
-        database: config.get('DATABASE_NAME', 'vaultheir'),
-        autoLoadEntities: true,
-        synchronize: config.get('NODE_ENV') !== 'production',
-        logging: config.get('NODE_ENV') === 'development',
-        poolSize: 20,
-        extra: {
-          connectionTimeoutMillis: 10000,
-          idleTimeoutMillis: 30000,
-          max: 20,
-        },
-        retryAttempts: 3,
-        retryDelay: 3000,
-      }),
+      useFactory: (config: ConfigService) => {
+        const isDemo = config.get('DEMO_MODE', 'true') === 'true';
+
+        if (isDemo || !config.get('DATABASE_URL')) {
+          // Demo mode: Use sql.js (in-memory)
+          return {
+            type: 'sqljs',
+            autoSave: false,
+            autoLoadEntities: true,
+            synchronize: true,
+            logging: false,
+          };
+        }
+
+        // Production mode: Use PostgreSQL
+        return {
+          type: 'postgres',
+          url: config.get('DATABASE_URL'),
+          autoLoadEntities: true,
+          synchronize: false,
+          logging: false,
+          ssl: { rejectUnauthorized: false },
+        };
+      },
     }),
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // DATABASE - MongoDB (Flexible document storage)
-    // ═══════════════════════════════════════════════════════════════════════════
-    MongooseModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.get('MONGODB_URL', 'mongodb://localhost:27017/vaultheir'),
-        maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-        family: 4,
-        retryWrites: true,
-        w: 'majority',
-      }),
-    }),
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // CACHING - Redis with intelligent TTL
+    // CACHING - In-memory for demo
     // ═══════════════════════════════════════════════════════════════════════════
     CacheModule.registerAsync({
       isGlobal: true,
@@ -123,7 +109,7 @@ import { BenchmarkModule } from './benchmark/benchmark.module';
       useFactory: (config: ConfigService) => ({
         ttl: config.get('CACHE_TTL', 300000), // 5 minutes default
         max: config.get('CACHE_MAX_ITEMS', 1000),
-        store: config.get('REDIS_URL') ? 'redis' : 'memory',
+        store: 'memory',
       }),
     }),
 
@@ -152,7 +138,6 @@ import { BenchmarkModule } from './benchmark/benchmark.module';
     // ═══════════════════════════════════════════════════════════════════════════
     HederaModule,
     PricingModule,
-    IPAssetsModule,
     AdaptiveModule,
     BenchmarkModule,
   ],
