@@ -5,8 +5,7 @@
 
 import { Injectable, NestMiddleware, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { RobustnessAgent, AgentConfig } from '../../../api_standards/agent_integration/robustness-agent';
-import { IntelligentErrorHandler, ErrorContext } from '../../../api_standards/error_handling/intelligent-error-handler';
+import { RobustnessAgent, AgentConfig, IntelligentErrorHandler, ErrorContext } from '../shared/robustness-agent';
 
 @Injectable()
 export class RobustnessMiddleware implements NestMiddleware {

@@ -4,7 +4,7 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { PipelineMetrics, PipelineError } from '../../../data_pipelines/pipeline-core-enhanced';
+import { PipelineMetrics, PipelineError } from '../shared/pipeline';
 
 export interface MonitoringEvent {
   timestamp: string;

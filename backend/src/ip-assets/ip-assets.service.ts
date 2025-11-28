@@ -8,7 +8,7 @@ import { Cache } from 'cache-manager';
 import { IPAsset } from './entities/ip-asset.entity';
 import { IPAssetMetadata, IPAssetMetadataDocument } from './schemas/ip-asset-metadata.schema';
 import { HederaService } from '../hedera/hedera.service';
-import { EnhancedIPAssetPipeline } from '../../../data_pipelines/ip-asset-pipeline-enhanced';
+import { EnhancedIPAssetPipeline } from '../shared/pipeline';
 import { AIEnhancedErrorFormatter } from '../middleware/ai-robustness.middleware';
 
 /**
