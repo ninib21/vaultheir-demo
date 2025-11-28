@@ -58,6 +58,8 @@
   "exclude": [
     "node_modules",
     "backend",
-    "services"
+    "services",
+    "implementation_templates",
+    "api_standards"
   ]
 }

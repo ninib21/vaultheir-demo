@@ -46,9 +46,6 @@ lerna-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Docker
-.dockerignore
-
 # Terraform
 .terraform/
 *.tfstate
@@ -76,3 +73,6 @@ services/pricing-service/venv/
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .cursor\rules\snyk_rules.mdc
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.cursor/rules/snyk_rules.mdc

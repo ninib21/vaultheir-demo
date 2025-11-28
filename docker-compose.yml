@@ -11,6 +11,7 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://backend:4000
+      - NEXT_PUBLIC_PRICING_SERVICE_URL=http://pricing-service:8000
     depends_on:
       - backend
     networks:

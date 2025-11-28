@@ -14,12 +14,11 @@ const Hero = dynamic(() => import('@/components/sections/Hero'), {
   loading: () => <div className="min-h-screen" />,
 });
 
-const Stats = dynamic(() => import('@/components/sections/Stats'));
 const Features = dynamic(() => import('@/components/sections/Features'));
 const Demo = dynamic(() => import('@/components/sections/Demo'));
 const Pricing = dynamic(() => import('@/components/sections/Pricing'));
-const Testimonials = dynamic(() => import('@/components/sections/Testimonials'));
 const CTA = dynamic(() => import('@/components/sections/CTA'));
+const Footer = dynamic(() => import('@/components/Footer'));
 
 export default function Home() {
   return (
@@ -29,12 +28,11 @@ export default function Home() {
         <Background3D />
         <div className="relative z-10">
           <Hero />
-          <Stats />
           <Features />
           <Demo />
           <Pricing />
-          <Testimonials />
           <CTA />
+          <Footer />
         </div>
       </main>
     </ErrorBoundary>

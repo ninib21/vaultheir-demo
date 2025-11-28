@@ -3,17 +3,22 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Shield } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 const navItems = [
-  { name: 'Features', href: '#features' },
-  { name: 'Demo', href: '#demo' },
-  { name: 'Pricing', href: '#pricing' },
-  { name: 'Testimonials', href: '#testimonials' },
+  { name: 'Home', href: '/', homepageOnly: false },
+  { name: 'Features', href: '#features', homepageOnly: true },
+  { name: 'Demo', href: '#demo', homepageOnly: true },
+  { name: 'Pricing', href: '#pricing', homepageOnly: true },
+  { name: 'Dashboard', href: '/dashboard', homepageOnly: false },
+  { name: 'Investors', href: '/investors', homepageOnly: false },
 ];
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +27,15 @@ export default function Navigation() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Helper function to get the correct href
+  const getHref = (item: typeof navItems[0]) => {
+    if (item.homepageOnly && !isHomePage) {
+      // If we're not on homepage and this is a homepage-only link, go to homepage with anchor
+      return `/${item.href}`;
+    }
+    return item.href;
+  };
 
   return (
     <motion.nav
@@ -55,7 +69,7 @@ export default function Navigation() {
             {navItems.map((item) => (
               <motion.a
                 key={item.name}
-                href={item.href}
+                href={getHref(item)}
                 className="text-gray-300 hover:text-white transition-colors font-semibold text-sm relative group"
                 whileHover={{ y: -2 }}
               >
@@ -64,7 +78,7 @@ export default function Navigation() {
               </motion.a>
             ))}
             <motion.a
-              href="#demo"
+              href={isHomePage ? '#demo' : '/#demo'}
               className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-bold text-white hover:opacity-90 transition-all shadow-lg shadow-primary-500/30"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
@@ -96,7 +110,7 @@ export default function Navigation() {
               {navItems.map((item) => (
                 <a
                   key={item.name}
-                  href={item.href}
+                  href={getHref(item)}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block text-gray-300 hover:text-white transition-colors font-medium"
                 >
@@ -104,7 +118,7 @@ export default function Navigation() {
                 </a>
               ))}
               <a
-                href="#demo"
+                href={isHomePage ? '#demo' : '/#demo'}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block w-full text-center px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold text-white"
               >

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { ToastProvider } from '@/components/providers/ToastProvider';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import ClientComponents from '@/components/ClientComponents';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -38,11 +40,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <ClientComponents />
+            {children}
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

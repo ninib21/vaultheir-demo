@@ -1,19 +1,34 @@
 import { Controller, Get, Post, Body, Param, Query, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { IPAssetsService } from './ip-assets.service';
+import { IPAssetsService, CreateIPAssetDto, SearchFilters } from './ip-assets.service';
 
 @Controller('ip-assets')
 export class IPAssetsController {
   constructor(private readonly ipAssetsService: IPAssetsService) {}
 
   @Post()
-  async create(@Body() createDto: Partial<any>) {
+  async create(@Body() createDto: CreateIPAssetDto) {
     return this.ipAssetsService.create(createDto);
   }
 
   @Get()
-  async findAll(@Query('userId') userId: string) {
-    return this.ipAssetsService.findAll(userId || 'demo-user');
+  async findAll(
+    @Query('userId') userId?: string,
+    @Query('type') type?: string,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const filters: SearchFilters = {
+      userId: userId || 'demo-user',
+      type,
+      status,
+      search,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+    };
+    return this.ipAssetsService.findAll(filters);
   }
 
   @Get(':id')

@@ -1,0 +1,25 @@
+📱 VAULTHEIR DEMO - PHONE ACCESS
+
+🔗 Open these URLs on your phone:
+
+Homepage:
+http://192.168.0.163:3000
+
+Investors Page:
+http://192.168.0.163:3000/investors
+
+✅ Instructions:
+1. Connect your phone to the SAME WiFi as your computer
+2. Open your phone's browser (Safari/Chrome)
+3. Type the URL above
+4. Enjoy the demo!
+
+📡 Network Info:
+- Local Homepage: http://localhost:3000
+- Local Investors: http://localhost:3000/investors
+- Network Homepage: http://192.168.0.163:3000
+- Network Investors: http://192.168.0.163:3000/investors
+- Server: Running ✅
+
+⚠️ Note: Your phone and computer must be on the same WiFi network!
+

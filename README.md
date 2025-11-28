@@ -42,6 +42,28 @@ npm run dev
 npm run build
 ```
 
+## 🐳 Docker Setup
+
+```bash
+# Copy env template if you haven't already
+cp .env.example .env
+
+# Build containers
+npm run docker:build
+
+# Start the full stack (frontend, backend, pricing service, dbs)
+npm run docker:up
+```
+
+- Frontend: http://localhost:3000  
+- Backend API: http://localhost:4000/api  
+- Pricing Service: http://localhost:8000  
+
+Use `npm run docker:logs` to tail container logs and `npm run docker:down` to stop
+everything. The frontend is wired to the internal services through
+`NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_PRICING_SERVICE_URL`, so requests resolve
+correctly inside Docker.
+
 ## 🌐 Demo
 
 Visit http://localhost:3000 to see the demo in action.
