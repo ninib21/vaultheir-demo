@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
-import { Check, X, Zap, Crown, Building2, ArrowRight, Calculator, Sparkles, Star, Gem } from 'lucide-react';
+import { Check, X, Zap, Crown, Calculator, Sparkles, Star, Gem } from 'lucide-react';
 import ROICalculator from '@/components/ROICalculator';
 import { usePricing } from '@/lib/hooks/usePricing';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -20,7 +20,8 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 const pricingTiers = [
   {
-    name: 'Free Forever',
+    name: 'Free',
+    key: 'free',
     subtitle: 'Basic Vault',
     price: 0,
     annualPrice: 0,
@@ -40,39 +41,16 @@ const pricingTiers = [
       'Family sharing',
     ],
     cta: 'Start Free',
-    popular: false,
-    color: 'from-primary-500 to-primary-600',
-  },
-  {
-    name: 'Plus',
-    subtitle: 'Enhanced Protection',
-    price: 4.99,
-    annualPrice: 59.88,
-    icon: Zap,
-    description: 'For individuals who need automation',
-    features: [
-      'Emergency binder automation',
-      'Enhanced storage',
-      'Basic automation',
-      'Insurance management',
-      'Medical contacts',
-      'Banking info vault',
-      'Password vault',
-    ],
-    notIncluded: [
-      'Executor tools',
-      'CNS encryption',
-      'Memory vault',
-    ],
-    cta: 'Get Started',
+    href: '/signup?plan=free',
     popular: false,
     color: 'from-primary-500 to-primary-600',
   },
   {
     name: 'Pro',
+    key: 'pro',
     subtitle: 'Complete Estate Planning',
     price: 14.99,
-    annualPrice: 179.88,
+    annualPrice: 149.88,
     icon: Crown,
     description: 'Ideal for families with complex estates',
     features: [
@@ -91,35 +69,13 @@ const pricingTiers = [
       'White-label options',
     ],
     cta: 'Start Free Trial',
+    href: '/signup?plan=pro',
     popular: true,
     color: 'from-accent-500 to-primary-500',
   },
   {
-    name: 'Enterprise Family',
-    subtitle: 'Multi-Generational',
-    price: 24.99,
-    annualPrice: 299.88,
-    icon: Building2,
-    description: 'For multi-generational families',
-    features: [
-      'Full family vault',
-      'Unlimited sharing',
-      'Role management',
-      'Time-based releases',
-      'Consent workflows',
-      '24/7 support',
-      'Compliance reporting',
-      'Advanced analytics',
-      'Dedicated support',
-      'Cross-border estates',
-    ],
-    notIncluded: [],
-    cta: 'Start Free Trial',
-    popular: false,
-    color: 'from-primary-600 to-accent-600',
-  },
-  {
     name: 'Lifetime',
+    key: 'lifetime',
     subtitle: 'One-Time Payment',
     price: 399,
     annualPrice: 399,
@@ -136,6 +92,7 @@ const pricingTiers = [
     ],
     notIncluded: [],
     cta: 'Get Lifetime Access',
+    href: '/signup?plan=lifetime',
     popular: false,
     color: 'from-accent-500 to-accent-600',
   },
@@ -146,6 +103,18 @@ export default function Pricing() {
   const [showCalculator, setShowCalculator] = useState(false);
   const [pricingData, setPricingData] = useState<Record<string, any>>({});
   const { getTiers, loading } = usePricing();
+
+  const getAnnualSavingsPercent = (tier: (typeof pricingTiers)[number]) => {
+    if (!tier.price || tier.price <= 0 || tier.isLifetime) return null;
+    const baselineAnnual = tier.price * 12;
+    if (!tier.annualPrice || tier.annualPrice >= baselineAnnual) return null;
+    return Math.round((1 - tier.annualPrice / baselineAnnual) * 100);
+  };
+
+  const proTier = pricingTiers.find((tier) => tier.key === 'pro');
+  const annualSavingsPercent = proTier ? getAnnualSavingsPercent(proTier) : null;
+  const annualSavingsColor = annualSavingsPercent === null ? 'text-gray-300' : annualSavingsPercent >= 0 ? 'text-emerald-400' : 'text-rose-400';
+  const annualSavingsLabel = annualSavingsPercent === null ? '0%' : `${annualSavingsPercent > 0 ? '+' : ''}${annualSavingsPercent}%`;
 
   useEffect(() => {
     const fetchTiers = async () => {
@@ -217,7 +186,7 @@ export default function Pricing() {
 
           {/* Enhanced Billing Toggle */}
           <motion.div
-            className="flex items-center justify-center gap-2 mt-8 p-1.5 glass-premium rounded-xl inline-flex"
+            className="flex flex-wrap items-center justify-center gap-2 mt-8 p-1.5 glass-premium rounded-xl"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -247,19 +216,19 @@ export default function Pricing() {
             >
               Annual
               <motion.span
-                className="absolute -top-3 -right-3 bg-gradient-to-r from-accent-500 to-primary-500 text-white text-xs px-2 py-1 rounded-full font-bold"
+                className="absolute -top-3 -right-3 bg-white/10 px-2 py-1 rounded-full font-bold"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', delay: 0.5 }}
               >
-                -17%
+                <span className={`text-xs ${annualSavingsColor}`}>{annualSavingsLabel}</span>
               </motion.span>
             </motion.button>
           </motion.div>
 
           <motion.button
             onClick={() => setShowCalculator(!showCalculator)}
-            className="mt-8 inline-flex items-center gap-2 px-6 py-3 glass-premium rounded-xl text-primary-400 hover:text-primary-300 transition-colors hover-glow group"
+            className="mt-10 inline-flex items-center gap-2 px-6 py-3 glass-premium rounded-xl text-primary-400 hover:text-primary-300 transition-colors hover-glow group"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -280,10 +249,10 @@ export default function Pricing() {
           </motion.div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-12 items-start pt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-12 items-start pt-8">
           {pricingTiers.map((tier, index) => (
             <motion.div
-              key={tier.name}
+              key={tier.key}
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -341,7 +310,7 @@ export default function Pricing() {
               </div>
 
               <a
-                href={tier.name === 'Enterprise Family' ? '#contact' : '#demo'}
+                href={tier.href ?? '#demo'}
                 className={`block w-full text-center py-2.5 px-4 rounded-lg font-semibold mb-4 transition-all text-sm ${
                   tier.popular
                     ? `bg-gradient-to-r ${tier.color} text-white glow-effect`

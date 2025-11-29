@@ -83,7 +83,7 @@ export default function Navigation() {
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
             >
-              Get Started
+              Try Demo
             </motion.a>
           </div>
 
@@ -122,7 +122,7 @@ export default function Navigation() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block w-full text-center px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg font-semibold text-white"
               >
-                Get Started
+                Try Demo
               </a>
             </div>
           </motion.div>
