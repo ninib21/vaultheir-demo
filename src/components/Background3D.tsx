@@ -2,7 +2,7 @@
 
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Stars, MeshDistortMaterial } from '@react-three/drei';
-import { useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 
@@ -19,7 +19,7 @@ function AnimatedMesh() {
 
   return (
     <mesh ref={meshRef} position={[0, 0, 0]}>
-      <torusKnotGeometry args={[1, 0.3, 128, 32]} />
+      <torusKnotGeometry args={[1, 0.3, 64, 16]} />
       <MeshDistortMaterial
         color="#71717a"
         attach="material"
@@ -34,18 +34,17 @@ function AnimatedMesh() {
   );
 }
 
-function Particles() {
+function Particles({ count = 600 }: { count?: number }) {
   const particlesRef = useRef<THREE.Points>(null);
-  const particles = useRef<Float32Array | null>(null);
-
-  if (!particles.current) {
-    particles.current = new Float32Array(1000 * 3);
-    for (let i = 0; i < 1000; i++) {
-      particles.current[i * 3] = (Math.random() - 0.5) * 20;
-      particles.current[i * 3 + 1] = (Math.random() - 0.5) * 20;
-      particles.current[i * 3 + 2] = (Math.random() - 0.5) * 20;
+  const positions = useMemo(() => {
+    const buffer = new Float32Array(count * 3);
+    for (let i = 0; i < count; i += 1) {
+      buffer[i * 3] = (Math.random() - 0.5) * 18;
+      buffer[i * 3 + 1] = (Math.random() - 0.5) * 18;
+      buffer[i * 3 + 2] = (Math.random() - 0.5) * 18;
     }
-  }
+    return buffer;
+  }, [count]);
 
   useFrame((state) => {
     if (particlesRef.current) {
@@ -58,10 +57,10 @@ function Particles() {
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={1000}
-          array={particles.current}
+          count={count}
+          array={positions}
           itemSize={3}
-          args={[particles.current, 3]}
+          args={[positions, 3]}
         />
       </bufferGeometry>
       <pointsMaterial size={0.05} color="#a1a1aa" transparent opacity={0.6} />
@@ -69,28 +68,68 @@ function Particles() {
   );
 }
 
+const FALLBACK_BG =
+  'fixed inset-0 -z-10 h-screen w-screen bg-gradient-to-br from-[#040507] via-[#090c14] to-[#11162b]';
+
+function shouldDefer3D() {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isSmallViewport = window.matchMedia('(max-width: 768px)').matches;
+  const lowPowerDevice =
+    typeof navigator !== 'undefined' &&
+    typeof navigator.hardwareConcurrency === 'number' &&
+    navigator.hardwareConcurrency <= 4;
+  return prefersReducedMotion || isSmallViewport || lowPowerDevice;
+}
+
 export default function Background3D() {
+  const [render3D, setRender3D] = useState(false);
+
+  useEffect(() => {
+    if (shouldDefer3D()) {
+      return;
+    }
+
+    const scheduleIdle = (cb: () => void) => {
+      if (typeof window === 'undefined') {
+        return () => undefined;
+      }
+      if ('requestIdleCallback' in window) {
+        const handle = (window as any).requestIdleCallback(cb, { timeout: 1200 });
+        return () => (window as any).cancelIdleCallback(handle);
+      }
+      const timeout = window.setTimeout(cb, 200);
+      return () => window.clearTimeout(timeout);
+    };
+
+    const cancel = scheduleIdle(() => setRender3D(true));
+    return cancel;
+  }, []);
+
+  if (!render3D) {
+    return <div aria-hidden="true" className={`${FALLBACK_BG} blur-[1px]`} />;
+  }
+
   return (
     <div className="fixed inset-0 -z-10 h-screen w-screen">
-      <Canvas
-        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        dpr={[1, 2]}
-      >
-        <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={75} />
+      <Canvas gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} dpr={[1, 1.5]}>
+        <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={70} />
         <OrbitControls
           enableZoom={false}
           enablePan={false}
           autoRotate
-          autoRotateSpeed={0.5}
+          autoRotateSpeed={0.4}
           minPolarAngle={Math.PI / 3}
-          maxPolarAngle={Math.PI / 1.5}
+          maxPolarAngle={Math.PI / 1.6}
         />
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} color="#71717a" />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#a1a1aa" />
-        <Stars radius={100} depth={50} count={5000} factor={4} fade speed={1} />
+        <ambientLight intensity={0.45} />
+        <pointLight position={[10, 10, 10]} intensity={0.8} color="#71717a" />
+        <pointLight position={[-10, -10, -10]} intensity={0.4} color="#a1a1aa" />
+        <Stars radius={90} depth={45} count={2000} factor={3} fade speed={0.6} />
         <AnimatedMesh />
-        <Particles />
+        <Particles count={600} />
       </Canvas>
     </div>
   );

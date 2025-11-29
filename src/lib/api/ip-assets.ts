@@ -40,6 +40,11 @@ export async function getIPAsset(id: string): Promise<IPAsset> {
   return response.data;
 }
 
+export async function getAllAssets(): Promise<IPAsset[]> {
+  const response = await apiClient.get<IPAsset[]>('/ip-assets');
+  return response.data;
+}
+
 /**
  * Create a new IP asset
  */

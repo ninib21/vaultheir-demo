@@ -21,11 +21,11 @@ const team = [
     },
   },
   {
-    name: 'Sarah Mitchell',
+    name: 'Jade Navarro',
     role: 'Chief Technology Officer',
-    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=300&fit=crop&crop=face',
-    initials: 'SM',
-    bio: 'Blockchain architect with deep expertise in distributed systems. Led engineering at two unicorn startups before joining VaultHeir.',
+    image: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=300&h=300&fit=crop&crop=face',
+    initials: 'JN',
+    bio: 'Distributed systems architect who scaled web3 infrastructure for Fortune 500 enterprises before joining VaultHeir.',
     credentials: [
       { icon: Briefcase, text: 'Ex-Coinbase' },
       { icon: GraduationCap, text: 'Stanford PhD' },

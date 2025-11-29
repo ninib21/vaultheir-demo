@@ -9,7 +9,6 @@ export class IdempotencyRecord {
   contextHash: string;
 
   @Column('varchar', { length: 255 })
-  @Index()
   idempotencyKey: string;
 
   @Column('varchar', { length: 10 })
@@ -39,6 +38,6 @@ export class IdempotencyRecord {
   @CreateDateColumn()
   createdAt: Date;
 
-  @Column('timestamp', { nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   expiresAt: Date;
 }

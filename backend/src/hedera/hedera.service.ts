@@ -7,6 +7,7 @@ import {
   FileCreateTransaction,
   FileContentsQuery,
   TransactionResponse,
+  AccountBalanceQuery,
 } from '@hashgraph/sdk';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class HederaService implements OnModuleInit {
   private client: Client;
   private operatorId: AccountId;
   private operatorKey: PrivateKey;
+  private network: string;
 
   constructor(private configService: ConfigService) {}
 
@@ -28,8 +30,9 @@ export class HederaService implements OnModuleInit {
     }
 
     this.operatorId = AccountId.fromString(operatorId);
-    this.operatorKey = PrivateKey.fromString(operatorKey);
+    this.operatorKey = this.parsePrivateKey(operatorKey);
 
+    this.network = network;
     this.client = Client.forName(network);
     this.client.setOperator(this.operatorId, this.operatorKey);
 
@@ -106,6 +109,63 @@ export class HederaService implements OnModuleInit {
       status: 'success',
       timestamp: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Lightweight connectivity + config check for monitoring endpoints
+   */
+  async getStatus() {
+    const network = this.network ?? this.configService.get<string>('HEDERA_NETWORK', 'testnet');
+    if (!this.client || !this.operatorId || !this.operatorKey) {
+      return {
+        configured: false,
+        network,
+        operatorId: this.operatorId ? this.operatorId.toString() : null,
+        message: 'Missing operator credentials. Set HEDERA_OPERATOR_ID and HEDERA_OPERATOR_KEY.',
+      };
+    }
+
+    try {
+      const start = Date.now();
+      await new AccountBalanceQuery().setAccountId(this.operatorId).execute(this.client);
+      const latencyMs = Date.now() - start;
+
+      return {
+        configured: true,
+        network,
+        operatorId: this.operatorId.toString(),
+        latencyMs,
+        lastChecked: new Date().toISOString(),
+      };
+    } catch (error) {
+      return {
+        configured: false,
+        network,
+        operatorId: this.operatorId.toString(),
+        message: 'Failed to reach Hedera network',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  private parsePrivateKey(rawKey: string): PrivateKey {
+    const trimmed = rawKey.trim();
+
+    const normalize = (value: string) => (value.startsWith('0x') ? value.slice(2) : value);
+    const hex = normalize(trimmed);
+    const isHex = /^[0-9a-f]+$/i.test(hex);
+
+    if (isHex) {
+      if (hex.startsWith('302e') || hex.startsWith('3081')) {
+        return PrivateKey.fromStringDer(hex);
+      }
+      if (hex.length === 64) {
+        return PrivateKey.fromStringED25519(hex);
+      }
+      return PrivateKey.fromStringECDSA(hex);
+    }
+
+    return PrivateKey.fromString(trimmed);
   }
 }
 

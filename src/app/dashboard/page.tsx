@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '@/components/Navigation';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { createIPAsset, CreateIPAssetDto, getAllAssets, IPAsset } from '@/lib/api/ip-assets';
+import { useToastContext } from '@/components/providers/ToastProvider';
+import { notarizeWithHedera } from '@/lib/api/hedera';
 import {
   FileText,
   Shield,
@@ -20,7 +23,37 @@ import {
   Eye,
   Copy,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
+
+type AssetTypeLabel = 'Patent' | 'Trademark' | 'Copyright' | 'Trade Secret' | 'Legal Document';
+type AssetStatusLabel = 'Notarized' | 'Processing';
+
+type DashboardAsset = {
+  id: string;
+  name: string;
+  type: AssetTypeLabel;
+  status: AssetStatusLabel;
+  notarizedAt: string | null;
+  transactionId: string | null;
+  hash: string | null;
+  value: string;
+  category: string;
+};
+
+const assetTypeMeta: Record<CreateIPAssetDto['type'], { label: AssetTypeLabel; category: string }> = {
+  patent: { label: 'Patent', category: 'Technology' },
+  trademark: { label: 'Trademark', category: 'Brand' },
+  copyright: { label: 'Copyright', category: 'Creative' },
+  'trade-secret': { label: 'Trade Secret', category: 'Security' },
+};
+
+const assetTypeOptions = [
+  { value: 'patent', label: 'Patent', helper: 'Inventions, algorithms, product designs' },
+  { value: 'trademark', label: 'Trademark', helper: 'Logos, slogans, brand assets' },
+  { value: 'copyright', label: 'Copyright', helper: 'Creative works, media, documentation' },
+  { value: 'trade-secret', label: 'Trade Secret', helper: 'Confidential processes, playbooks' },
+] satisfies Array<{ value: CreateIPAssetDto['type']; label: string; helper: string }>;
 
 const Background3D = dynamic(() => import('@/components/Background3D'), {
   ssr: false,
@@ -28,54 +61,54 @@ const Background3D = dynamic(() => import('@/components/Background3D'), {
 });
 
 // Sample notarized assets data
-const sampleAssets = [
+const sampleAssets: DashboardAsset[] = [
   {
     id: '1',
-    name: 'AI-Powered Trading Algorithm v2.1',
+    name: 'Aurora Biotech Gene Therapy Dossier',
     type: 'Patent',
     status: 'Notarized',
     notarizedAt: '2024-11-20T14:32:00Z',
-    transactionId: '0.0.5678923@1700234567.123456789',
-    hash: '0x8a7b3c2d1e4f5a6b7c8d9e0f1a2b3c4d5e6f7890',
+    transactionId: '0.0.7001101@1700234567.123456789',
+    hash: '0x9e2bf8a4c17d55b6ae34c97fbe61d9c203fa9d11',
     value: '$450,000',
     category: 'Technology',
   },
   {
     id: '2',
-    name: 'VaultHeir Brand Identity Package',
+    name: 'Lumen Collective Brand System',
     type: 'Trademark',
     status: 'Notarized',
     notarizedAt: '2024-11-18T09:15:00Z',
-    transactionId: '0.0.5678924@1700123456.987654321',
-    hash: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef12',
+    transactionId: '0.0.7001102@1700123456.987654321',
+    hash: '0x1f4a9ce0b72d88aa4b7f0dc42f51a8d5cc0e8844',
     value: '$85,000',
     category: 'Brand',
   },
   {
     id: '3',
-    name: 'Secure Document Encryption Protocol',
+    name: 'Sentinel Zero-Knowledge Security Stack',
     type: 'Trade Secret',
     status: 'Notarized',
     notarizedAt: '2024-11-15T16:45:00Z',
-    transactionId: '0.0.5678925@1700012345.456789012',
-    hash: '0x2b3c4d5e6f7890abcdef1234567890abcdef1234',
+    transactionId: '0.0.7001103@1700012345.456789012',
+    hash: '0x5c8f71d92b0efab4730d96caa453b0f3de9a22af',
     value: '$1,200,000',
     category: 'Security',
   },
   {
     id: '4',
-    name: 'Mobile App UI/UX Design System',
+    name: 'Nebula OS Interface Library',
     type: 'Copyright',
     status: 'Notarized',
     notarizedAt: '2024-11-12T11:20:00Z',
-    transactionId: '0.0.5678926@1699901234.789012345',
-    hash: '0x3c4d5e6f7890abcdef1234567890abcdef123456',
+    transactionId: '0.0.7001104@1699901234.789012345',
+    hash: '0x72b1d4f93e0c8aa5bb1d2f0c8d4a55e1ffcc01bd',
     value: '$125,000',
     category: 'Design',
   },
   {
     id: '5',
-    name: 'Blockchain Integration Framework',
+    name: 'Helios Quantum Compute Recipes',
     type: 'Patent',
     status: 'Processing',
     notarizedAt: null,
@@ -86,12 +119,12 @@ const sampleAssets = [
   },
   {
     id: '6',
-    name: 'Estate Planning Legal Templates',
+    name: 'Atlas Estate Governance Templates',
     type: 'Legal Document',
     status: 'Notarized',
     notarizedAt: '2024-11-08T13:55:00Z',
-    transactionId: '0.0.5678927@1699790123.012345678',
-    hash: '0x4d5e6f7890abcdef1234567890abcdef12345678',
+    transactionId: '0.0.7001105@1699790123.012345678',
+    hash: '0xb4a7e6f8d2100ccf9a62dcb4ef1d05e8a412779c',
     value: '$45,000',
     category: 'Legal',
   },
@@ -104,13 +137,43 @@ const stats = [
   { label: 'Processing', value: '1', icon: Clock, color: 'yellow' },
 ];
 
-const typeColors: Record<string, string> = {
+const typeColors: Record<AssetTypeLabel, string> = {
   'Patent': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   'Trademark': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   'Copyright': 'bg-green-500/20 text-green-400 border-green-500/30',
   'Trade Secret': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   'Legal Document': 'bg-gray-500/20 text-gray-400 border-gray-500/30',
 };
+
+function mapApiAssetToDashboard(asset: IPAsset): DashboardAsset {
+  const meta = assetTypeMeta[asset.type];
+  return {
+    id: asset.id,
+    name: asset.name,
+    type: meta?.label ?? 'Patent',
+    status: asset.status === 'notarized' ? 'Notarized' : 'Processing',
+    notarizedAt: asset.status === 'notarized' ? asset.updatedAt : null,
+    transactionId: asset.hederaTransactionId ?? null,
+    hash: null,
+    value: '—',
+    category: meta?.category ?? 'Custom',
+  };
+}
+
+function buildDemoAssetFromForm(name: string, type: CreateIPAssetDto['type']): DashboardAsset {
+  const meta = assetTypeMeta[type];
+  return {
+    id: `demo-${Date.now()}`,
+    name,
+    type: meta?.label ?? 'Patent',
+    status: 'Processing',
+    notarizedAt: null,
+    transactionId: null,
+    hash: null,
+    value: '—',
+    category: meta?.category ?? 'Custom',
+  };
+}
 
 function formatDate(dateString: string | null) {
   if (!dateString) return '-';
@@ -129,19 +192,99 @@ function truncateHash(hash: string | null) {
 }
 
 export default function DashboardPage() {
+  const { success, error, info } = useToastContext();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedAsset, setSelectedAsset] = useState<typeof sampleAssets[0] | null>(null);
+  const [assets, setAssets] = useState<DashboardAsset[]>(sampleAssets);
+  const [selectedAsset, setSelectedAsset] = useState<DashboardAsset | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [notarizingAssetId, setNotarizingAssetId] = useState<string | null>(null);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
 
-  const filteredAssets = sampleAssets.filter(asset =>
+  const filteredAssets = assets.filter(asset =>
     asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     asset.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleAssetCreated = (asset: DashboardAsset) => {
+    setAssets((prev) => [asset, ...prev]);
+    setSelectedAsset(asset);
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchAssets = async () => {
+      setIsLoadingAssets(true);
+      try {
+        const records = await getAllAssets();
+        if (!mounted) return;
+        const mapped = records.map((record) => mapApiAssetToDashboard(record));
+        setAssets(mapped.length ? mapped : sampleAssets);
+      } catch (fetchError) {
+        console.error(fetchError);
+      } finally {
+        if (mounted) setIsLoadingAssets(false);
+      }
+    };
+
+    fetchAssets();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleQuickNotarize = async (asset: DashboardAsset) => {
+    if (notarizingAssetId) return;
+
+    setNotarizingAssetId(asset.id);
+
+    try {
+      const payloadContent = JSON.stringify({
+        assetId: asset.id,
+        name: asset.name,
+        type: asset.type,
+        category: asset.category,
+        createdAt: new Date().toISOString(),
+      });
+
+      const response = await notarizeWithHedera({
+        content: payloadContent,
+        metadata: {
+          source: 'dashboard',
+          assetName: asset.name,
+        },
+      });
+
+      const hashscanUrl = `https://hashscan.io/testnet/transaction/${response.transactionId}`;
+
+      setAssets((prev) =>
+        prev.map((item) =>
+          item.id === asset.id
+            ? {
+                ...item,
+                status: 'Notarized',
+                notarizedAt: response.timestamp,
+                transactionId: response.transactionId,
+              }
+            : item
+        )
+      );
+
+      success('Asset notarized on Hedera', 4000);
+      info(`Hashscan: ${hashscanUrl}`, 6000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to notarize asset';
+      error(message);
+    } finally {
+      setNotarizingAssetId(null);
+    }
   };
 
   return (
@@ -174,6 +317,7 @@ export default function DashboardPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsCreateModalOpen(true)}
                   className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl font-semibold text-white shadow-lg shadow-primary-500/30"
                 >
                   <Plus className="w-5 h-5" />
@@ -318,6 +462,24 @@ export default function DashboardPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
+                            {asset.status !== 'Notarized' && (
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={notarizingAssetId === asset.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleQuickNotarize(asset);
+                                }}
+                              >
+                                {notarizingAssetId === asset.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Shield className="w-4 h-4" />
+                                )}
+                              </motion.button>
+                            )}
                             <motion.button
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
@@ -366,10 +528,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Asset Detail Modal */}
+        {/* Asset Detail & Creation Modals */}
         <AnimatePresence>
           {selectedAsset && (
             <motion.div
+              key="asset-detail-modal"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -482,8 +645,202 @@ export default function DashboardPage() {
               </motion.div>
             </motion.div>
           )}
+          {isCreateModalOpen && (
+            <NewAssetModal
+              key="new-asset-modal"
+              onClose={() => setIsCreateModalOpen(false)}
+              onCreated={handleAssetCreated}
+            />
+          )}
         </AnimatePresence>
       </main>
     </ErrorBoundary>
+  );
+}
+
+interface NewAssetModalProps {
+  onClose: () => void;
+  onCreated: (asset: DashboardAsset) => void;
+}
+
+function NewAssetModal({ onClose, onCreated }: NewAssetModalProps) {
+  const { success, error, warning } = useToastContext();
+  const [assetName, setAssetName] = useState('');
+  const [assetType, setAssetType] = useState<CreateIPAssetDto['type']>('patent');
+  const [description, setDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setAssetName('');
+    setAssetType('patent');
+    setDescription('');
+    setFormError(null);
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!assetName.trim()) {
+      setFormError('Please enter an asset name');
+      return;
+    }
+
+    setFormError(null);
+    setIsSubmitting(true);
+
+    try {
+      const createdAsset = await createIPAsset({
+        name: assetName.trim(),
+        type: assetType,
+        description: description.trim() || undefined,
+      });
+
+      const mappedAsset = mapApiAssetToDashboard(createdAsset);
+      onCreated(mappedAsset);
+      success('Asset created and queued for notarization.');
+      resetForm();
+      onClose();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create asset';
+      error(message);
+      const fallbackAsset = buildDemoAssetFromForm(assetName.trim(), assetType);
+      onCreated(fallbackAsset);
+      warning('Running in demo mode. Asset stored locally for testing.');
+      resetForm();
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-xl glass-effect-strong rounded-2xl border border-white/20 p-6 shadow-2xl"
+      >
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-primary-300 mb-1">Create IP Asset</p>
+            <h3 className="text-2xl font-bold text-white">New Asset</h3>
+            <p className="text-sm text-gray-400 mt-1">
+              Capture key metadata before notarizing on Hedera.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
+            aria-label="Close new asset modal"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">
+              Asset Name
+            </label>
+            <input
+              type="text"
+              value={assetName}
+              onChange={(e) => setAssetName(e.target.value)}
+              placeholder="e.g., Estate Plan Playbook"
+              className="w-full px-4 py-2.5 glass-effect border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">
+              Asset Type
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {assetTypeOptions.map((option) => {
+                const isActive = assetType === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setAssetType(option.value)}
+                    className={`text-left p-3 rounded-xl border transition-all ${
+                      isActive
+                        ? 'border-primary-500 bg-primary-500/10 text-white'
+                        : 'border-white/10 text-gray-300 hover:border-primary-500/40'
+                    }`}
+                  >
+                    <div className="font-semibold">{option.label}</div>
+                    <div className="text-xs text-gray-400 mt-1">{option.helper}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Briefly describe what this asset protects or includes..."
+              className="w-full px-4 py-2.5 glass-effect border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all resize-none"
+            />
+          </div>
+
+          {formError && (
+            <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+              {formError}
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full sm:w-auto px-5 py-3 rounded-xl border border-white/10 text-gray-300 hover:text-white hover:border-white/30 transition-colors"
+            >
+              Cancel
+            </button>
+            <motion.button
+              type="submit"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+              disabled={isSubmitting}
+              className="w-full sm:flex-1 px-5 py-3 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Clock className="w-4 h-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Create Asset
+                </>
+              )}
+            </motion.button>
+          </div>
+
+          <p className="text-xs text-gray-500 text-center">
+            You can upload supporting documents and notarize this asset once it appears in the list.
+          </p>
+        </form>
+      </motion.div>
+    </motion.div>
   );
 }

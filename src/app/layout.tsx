@@ -22,6 +22,13 @@ export const metadata: Metadata = {
   description: 'Protect your intellectual property 90% faster and 95% cheaper with blockchain-powered notarization on Hedera Hashgraph.',
   keywords: ['IP management', 'blockchain', 'Hedera Hashgraph', 'intellectual property', 'patents', 'trademarks', 'copyright'],
   authors: [{ name: 'BidayaX LLC' }],
+  manifest: '/manifest.json',
+  themeColor: '#0a0a0a',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'VaultHeir',
+  },
   openGraph: {
     title: 'Vaultheir™ - Revolutionary IP Management Platform',
     description: 'Blockchain-powered IP notarization on Hedera Hashgraph',

@@ -20,5 +20,10 @@ export class HederaController {
     const receipt = await this.hederaService.getTransactionReceipt(transactionId);
     return receipt;
   }
+
+  @Get('status')
+  async getStatus() {
+    return this.hederaService.getStatus();
+  }
 }
 

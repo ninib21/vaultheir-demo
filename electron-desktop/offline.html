@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VaultHeir - Connection Error</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #ffffff;
+    }
+
+    .container {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      opacity: 0.5;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 16px;
+      color: #c0c0c0;
+    }
+
+    p {
+      color: #888888;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    button {
+      background: linear-gradient(135deg, #333333, #444444);
+      color: #ffffff;
+      border: 1px solid #555555;
+      padding: 12px 32px;
+      font-size: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #444444, #555555);
+      border-color: #666666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">&#x26A0;</div>
+    <h1>Connection Error</h1>
+    <p>Unable to connect to the VaultHeir server.<br>Please check your connection and try again.</p>
+    <button onclick="location.reload()">Retry Connection</button>
+  </div>
+</body>
+</html>

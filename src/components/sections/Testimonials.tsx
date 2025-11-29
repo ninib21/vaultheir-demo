@@ -5,11 +5,11 @@ import { Star, Quote } from 'lucide-react';
 
 const testimonials = [
   {
-    name: 'Sarah Chen',
+    name: 'Lana Kim',
     role: 'CEO, TechStartup Inc.',
     company: 'TechStartup Inc.',
-    image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=face',
-    initials: 'SC',
+    image: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=100&h=100&fit=crop&crop=face',
+    initials: 'LK',
     content: 'Vaultheir™ saved us over $150K in IP filing costs in our first year. The blockchain notarization is instant and the platform is incredibly user-friendly.',
     rating: 5,
   },

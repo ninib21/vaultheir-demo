@@ -1,0 +1,32 @@
+# VaultHeir Backend - NestJS Docker Image
+# Context: full project root
+
+FROM node:20-alpine
+WORKDIR /app
+
+# Copy backend package files
+COPY backend/package*.json ./
+
+# Install dependencies (legacy-peer-deps for NestJS compatibility)
+RUN npm install --legacy-peer-deps
+
+# Copy shared dependencies that backend imports
+COPY api_standards/ ../api_standards/
+COPY data_pipelines/ ../data_pipelines/
+
+# Copy backend source (excluding tests)
+COPY backend/src ./src
+COPY backend/tsconfig*.json ./
+COPY backend/nest-cli.json ./
+
+# Remove test files before build
+RUN rm -rf src/__tests__
+
+# Build TypeScript (skip tests)
+RUN npm run build
+
+# Expose backend port
+EXPOSE 3001
+
+# Start the backend
+CMD ["npm", "run", "start:prod"]

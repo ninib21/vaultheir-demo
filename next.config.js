@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable standalone output for Docker and Electron deployments
+  output: 'standalone',
   reactStrictMode: true,
   experimental: {
     serverActions: {

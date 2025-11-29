@@ -5,18 +5,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, CheckCircle, X } from 'lucide-react';
 
 const notifications = [
-  { name: 'Sarah', location: 'New York', action: 'protected a patent', time: '2 min ago' },
-  { name: 'James', location: 'London', action: 'notarized 3 documents', time: '5 min ago' },
-  { name: 'Maria', location: 'Tokyo', action: 'secured trade secrets', time: '8 min ago' },
-  { name: 'David', location: 'Berlin', action: 'protected a trademark', time: '12 min ago' },
-  { name: 'Emma', location: 'Sydney', action: 'notarized legal documents', time: '15 min ago' },
-  { name: 'Michael', location: 'Toronto', action: 'protected copyrights', time: '18 min ago' },
-  { name: 'Lisa', location: 'Singapore', action: 'secured IP portfolio', time: '22 min ago' },
-  { name: 'Alex', location: 'Dubai', action: 'notarized contracts', time: '25 min ago' },
+  { name: 'Olivia', location: 'San Francisco', action: 'protected a patent', time: '2 min ago' },
+  { name: 'Noah', location: 'London', action: 'notarized 3 documents', time: '5 min ago' },
+  { name: 'Isabella', location: 'Tokyo', action: 'secured trade secrets', time: '8 min ago' },
+  { name: 'Ethan', location: 'Berlin', action: 'protected a trademark', time: '12 min ago' },
+  { name: 'Mia', location: 'Sydney', action: 'notarized legal documents', time: '15 min ago' },
+  { name: 'Leo', location: 'Toronto', action: 'protected copyrights', time: '18 min ago' },
+  { name: 'Chloe', location: 'Singapore', action: 'secured IP portfolio', time: '22 min ago' },
+  { name: 'Mateo', location: 'Dubai', action: 'notarized contracts', time: '25 min ago' },
+  { name: 'Harper', location: 'Austin', action: 'verified emergency binder', time: '29 min ago' },
+  { name: 'Amelia', location: 'Dublin', action: 'anchored legacy documents', time: '35 min ago' },
 ];
 
 export default function SocialProofTicker() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() => Math.floor(Math.random() * notifications.length));
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 

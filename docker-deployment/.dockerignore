@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+*/node_modules
+
+# Build outputs
+.next
+dist
+build
+
+# Development files
+*.log
+.env*.local
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed in container)
+*.md
+!README.md
+
+# Electron (separate deployment)
+electron-desktop

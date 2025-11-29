@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, Shield, CheckCircle, Loader2, ArrowRight, AlertCircle, Lock, Database, Link, Cpu } from 'lucide-react';
 import { createIPAsset, notarizeIPAsset } from '@/lib/api/ip-assets';
+import { notarizeWithHedera } from '@/lib/api/hedera';
 import { useToastContext } from '@/components/providers/ToastProvider';
 import { validateFile } from '@/lib/utils/validation';
 
@@ -25,7 +26,7 @@ export default function Demo() {
   const [transactionHash, setTransactionHash] = useState<string>('');
   const [fileError, setFileError] = useState<string>('');
   const [liveHash, setLiveHash] = useState<string>('');
-  const { success, error: showError } = useToastContext();
+  const { success, error: showError, info } = useToastContext();
 
   // Animate hash while processing
   useEffect(() => {
@@ -88,7 +89,28 @@ export default function Demo() {
       });
 
       // Notarize on blockchain
-      const result = await notarizeIPAsset(asset.id, selectedFile);
+      let result;
+      try {
+        result = await notarizeIPAsset(asset.id, selectedFile);
+      } catch (apiError) {
+        const fallback = await notarizeWithHedera({
+          content: JSON.stringify({
+            assetId: asset.id,
+            name: assetName,
+            type: assetType,
+            description: `Uploaded file: ${selectedFile.name}`,
+          }),
+          metadata: {
+            source: 'demo-cta',
+            filename: selectedFile.name,
+          },
+        });
+        result = {
+          success: true,
+          transactionId: fallback.transactionId,
+          asset,
+        };
+      }
 
       // Wait for animation to complete
       await animationPromise;
@@ -96,7 +118,9 @@ export default function Demo() {
       setProcessingStage('complete');
       setTransactionHash(result.transactionId);
       setUploadStatus('success');
+      const hashscanUrl = `https://hashscan.io/testnet/transaction/${result.transactionId}`;
       success('IP asset successfully notarized on Hedera blockchain!');
+      info(`Hashscan: ${hashscanUrl}`, 6000);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to notarize IP asset';
 

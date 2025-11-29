@@ -51,6 +51,9 @@ async function bootstrap() {
     'https://vaultheir.com',
     'https://www.vaultheir.com',
     'https://app.vaultheir.com',
+    'https://myvaultheir.xyz',
+    'https://www.myvaultheir.xyz',
+    'https://demo.myvaultheir.xyz',
   ];
 
   app.enableCors({

@@ -5,7 +5,8 @@ RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci
+ENV NPM_CONFIG_LEGACY_PEER_DEPS=true
+RUN npm install --legacy-peer-deps
 
 FROM base AS builder
 WORKDIR /app
